@@ -7,6 +7,10 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
+  "dependencies": {
+    "@nfse-data-extractor/backend": "*",
+    "@nfse-data-extractor/frontend": "*"
+  },
   "devDependencies": {
     "prettier": "^3.2.5",
     "turbo": "^2.1.3",

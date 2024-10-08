@@ -1,0 +1,84 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: postgres
+    image: bitnami/postgresql:latest
+    restart: always
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: nfse-extractor
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "docker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.13-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    container_name: api
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 3000:3333 # Map host port 3000 to container port 3333
+    volumes:
+      - ./apps/backend:/app # Bind mount for live reloading
+      - /app/node_modules # Avoid conflicts with host node_modules
+    environment:
+      DATABASE_URL: "postgresql://docker:docker@postgres:5432/nfse-extractor?schema=public"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://api:3333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    container_name: web
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 3001:5173 # Map host port 3001 to container port 3000
+    volumes:
+      - ./apps/frontend:/app # Bind mount for live reloading
+      - /app/node_modules # Avoid conflicts with host node_modules
+    environment:
+      VITE_BASE_URL: "${API_URL}"  # Reference to the backend service
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - app_network
+
+
+networks:
+  app_network:
