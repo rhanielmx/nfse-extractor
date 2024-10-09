@@ -29,8 +29,8 @@ services:
       - app_network
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 10s
-      timeout: 5s
+      interval: 45s
+      timeout: 10s
       retries: 5
 
   api:
@@ -56,9 +56,23 @@ services:
       - app_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://api:3333/health"]
-      interval: 10s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 5
+
+  migrate:
+    container_name: migrate
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    command: ["npm", "run", "migrate"]
+    environment:
+      DATABASE_URL: "postgresql://docker:docker@postgres:5432/nfse-extractor?schema=public"
+    depends_on:
+      postgres:
+        condition: service_healthy 
+    networks:
+      - app_network
 
   web:
     container_name: web
@@ -72,13 +86,12 @@ services:
       - ./apps/frontend:/app # Bind mount for live reloading
       - /app/node_modules # Avoid conflicts with host node_modules
     environment:
-      VITE_BASE_URL: "${API_URL}"  # Reference to the backend service
-    depends_on:
-      api:
-        condition: service_healthy
+      VITE_BASE_URL: "localhost:3000"  # Reference to the backend service from the browser POVx
     networks:
       - app_network
-
+    depends_on:
+      api:
+        condition: service_started
 
 networks:
   app_network:
