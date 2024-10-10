@@ -27,7 +27,7 @@ app.register(websocketRoutes)
 app.register(receiptRoutes)
 
 app.get('/ping', async (request, reply) => {
-  reply.status(200).send({message: 'pong!'})
+  reply.status(200).send({message: 'pong'})
 })
 
 app.listen({ host: HOST , port: PORT }, (err) => {

@@ -24,27 +24,14 @@ export async function receiptRoutes(app:FastifyInstance) {
   app.post('/upload', async (request, reply) => {
     const images: ImageProps[] = []
  
-    for await (const file of request.files()) {
-      const filename = file.filename.replace('pdf', 'png')
-      let data
-      // try {          
-        const tempFilePath = join("./tmp", file.filename)
-        const writeStream = createWriteStream(tempFilePath)
-        file.file.pipe(writeStream)
-        
-        const imageUrl = await uploadReceiptDocumentToBucket('src/scripts/external/pipeline.py', [tempFilePath])
-        // console.log('[Data]', result)
-
-      // } catch(err) {
-      //   console.log('[Error]', err)
-      // }
+    for await (const document of request.files()) {
+      const filename = document.filename.replace('pdf', 'png')
+      const tempFilePath = join("./tmp", document.filename)
+      const writeStream = createWriteStream(tempFilePath)
+      document.file.pipe(writeStream)
       
-      // const { buffer } = await convertPdfFileToBase64PngImage({
-      //   file
-      // })
-
-      // const { imageUrl } = await uploadFileToBucketS3(buffer!, filename)
-
+      const imageUrl = await uploadReceiptDocumentToBucket('src/scripts/external/pipeline.py', [tempFilePath])
+     
       images.push({
         filename,
         image: imageUrl,

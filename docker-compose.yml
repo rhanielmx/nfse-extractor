@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   postgres:
     container_name: postgres
@@ -38,15 +36,13 @@ services:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
+    env_file: ./apps/backend/.env
     restart: always
     ports:
-      - 3000:3333 # Map host port 3000 to container port 3333
+      - 3000:3000 # Map host port 3000 to container port 3333
     volumes:
       - ./apps/backend:/app # Bind mount for live reloading
       - /app/node_modules # Avoid conflicts with host node_modules
-    environment:
-      DATABASE_URL: "postgresql://docker:docker@postgres:5432/nfse-extractor?schema=public"
-      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672"
     depends_on:
       postgres:
         condition: service_healthy
@@ -65,9 +61,7 @@ services:
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
-    command: ["npm", "run", "migrate"]
-    environment:
-      DATABASE_URL: "postgresql://docker:docker@postgres:5432/nfse-extractor?schema=public"
+    command: ["npm", "run", "migrate"]    
     depends_on:
       postgres:
         condition: service_healthy 
@@ -79,19 +73,17 @@ services:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
+    env_file: ./apps/frontend/.env
     restart: always
     ports:
-      - 3001:5173 # Map host port 3001 to container port 3000
+      - 5173:5173 # Map host port 5173 to container port 5173
     volumes:
       - ./apps/frontend:/app # Bind mount for live reloading
       - /app/node_modules # Avoid conflicts with host node_modules
-    environment:
-      VITE_BASE_URL: "localhost:3000"  # Reference to the backend service from the browser POVx
     networks:
       - app_network
     depends_on:
-      api:
-        condition: service_started
+      - api
 
 networks:
   app_network:

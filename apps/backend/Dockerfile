@@ -29,9 +29,10 @@ RUN npx prisma generate
 #RUN npx prisma migrate dev
 
 # Expose the port on which your Fastify app will run
-EXPOSE 3333
+EXPOSE 3000
 
-ENV HOST=0.0.0.0 PORT=3333
+ARG HOST
+ENV HOST=$HOST PORT=3000
 
 # Command to run your Fastify app
 CMD ["npm", "run", "dev"]
